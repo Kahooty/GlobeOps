@@ -1,0 +1,4 @@
+# GlobeOps Security Contact
+Contact: mailto:security@example.com
+Preferred-Languages: en
+Expires: 2027-01-01T00:00:00.000Z
