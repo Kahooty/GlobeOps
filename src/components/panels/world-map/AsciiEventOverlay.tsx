@@ -408,18 +408,48 @@ export function AsciiEventOverlay({
           // Zoom-adaptive minimum zone sizes — larger at global view, tighter when zoomed
           const minWidth = zoomLevel <= 1 ? 6 : zoomLevel <= 3 ? 4 : 3;
           const minHeight = zoomLevel <= 1 ? 8 : zoomLevel <= 3 ? 5 : 4;
-          const widthPct = Math.max(rightPct - leftPct, minWidth);
-          const heightPct = Math.max(bottomPct - topPct, minHeight);
+
+          const rawWidth = rightPct - leftPct;
+          const rawHeight = bottomPct - topPct;
+          const widthPct = Math.max(rawWidth, minWidth);
+          const heightPct = Math.max(rawHeight, minHeight);
+
+          // Symmetric padding around the zone
+          const padH = 1;   // 1% horizontal padding per side
+          const padV = 1.5; // 1.5% vertical padding per side
+
+          // When minimum size is enforced, center on cluster centroid
+          // instead of anchoring at the bounding box top-left
+          let zoneCenterLeft: number;
+          let zoneCenterTop: number;
+
+          if (rawWidth < minWidth || rawHeight < minHeight) {
+            // Use cluster centroid for tight clusters
+            const centroidPos = lonLatToViewportPercent(cluster.lon, cluster.lat, bounds);
+            if (!centroidPos) return [];
+            zoneCenterLeft = parseFloat(centroidPos.left);
+            zoneCenterTop = parseFloat(centroidPos.top);
+          } else {
+            // Use bounding box center for spread-out clusters
+            zoneCenterLeft = (leftPct + rightPct) / 2;
+            zoneCenterTop = (topPct + bottomPct) / 2;
+          }
+
+          // Position zone centered on the computed center point
+          const totalWidth = widthPct + padH * 2;
+          const totalHeight = heightPct + padV * 2;
+          const finalLeft = zoneCenterLeft - totalWidth / 2;
+          const finalTop = zoneCenterTop - totalHeight / 2;
 
           return (
             <AsciiEventZone
               key={`zone-${idx}`}
               events={cluster.events}
               dominantType={dominantType}
-              left={`${leftPct - 1}%`}
-              top={`${topPct - 1.5}%`}
-              width={`${widthPct + 2}%`}
-              height={`${heightPct + 3}%`}
+              left={`${finalLeft}%`}
+              top={`${finalTop}%`}
+              width={`${totalWidth}%`}
+              height={`${totalHeight}%`}
               variant={treatment.zoneVariant ?? 'single-type'}
               zoneLabel={treatment.zoneLabel ?? treatment.label}
               onMouseEnter={hoverHandler}

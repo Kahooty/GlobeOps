@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Dashboard } from '@/components/layout/Dashboard';
 import { GlobalCommandLine } from '@/components/terminal/GlobalCommandLine';
 import { CrtOverlay } from '@/components/terminal/CrtOverlay';
+import { WelcomeModal } from '@/components/layout/WelcomeModal';
 import { useAppStore } from '@/store/app-store';
 import { usePulseDriver } from '@/hooks/usePulse';
 
@@ -23,6 +24,7 @@ export default function App() {
       <Dashboard />
       <GlobalCommandLine />
       <CrtOverlay />
+      <WelcomeModal />
     </div>
   );
 }

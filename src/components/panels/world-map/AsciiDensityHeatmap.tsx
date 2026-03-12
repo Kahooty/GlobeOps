@@ -51,6 +51,16 @@ const MIN_COUNT_THRESHOLD: Record<number, number> = {
 // Block characters by intensity tier
 const BLOCK_CHARS = ['░', '▒', '▓', '█'];
 
+// Font size by zoom — scales character to fill cell proportionally
+const HEATMAP_FONT_SIZE: Record<number, string> = {
+  0: '22px',
+  1: '18px',
+  2: '14px',
+  3: '10px',
+  4: '8px',
+  5: '7px',
+};
+
 interface HeatmapCell {
   col: number;
   row: number;
@@ -174,14 +184,17 @@ function AsciiDensityHeatmapInner({
     const cellHeightPct = 100 / rows;
 
     // At higher zoom levels, reduce heatmap opacity since individual markers take over
-    const baseOpacity = zoomLevel >= 4 ? 0.15 : zoomLevel >= 3 ? 0.25 : 0.35;
+    const baseOpacity = zoomLevel >= 4 ? 0.08 : zoomLevel >= 3 ? 0.12 : 0.18;
 
     return cells.map((cell) => {
       // Use the same projection function as event markers for consistent positioning
       const pos = lonLatToViewportPercent(cell.centerLon, cell.centerLat, bounds);
       if (!pos) return null;
 
-      const opacity = baseOpacity + cell.intensity * 0.1;
+      const opacity = baseOpacity + cell.intensity * 0.04;
+
+      // Background fill opacity scales with intensity (8-20%)
+      const bgOpacity = 2 + cell.intensity * 2;
 
       return (
         <div
@@ -195,12 +208,14 @@ function AsciiDensityHeatmapInner({
             transform: 'translate(-50%, -50%)',
             color: `var(${cell.colorVar})`,
             opacity,
-            fontSize: '10px',
+            fontSize: HEATMAP_FONT_SIZE[zoomLevel] ?? '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             pointerEvents: 'none',
-            textShadow: `0 0 6px color-mix(in srgb, var(${cell.colorVar}) 30%, transparent)`,
+            backgroundColor: `color-mix(in srgb, var(${cell.colorVar}) ${bgOpacity}%, transparent)`,
+            borderRadius: '1px',
+            textShadow: `0 0 4px color-mix(in srgb, var(${cell.colorVar}) 12%, transparent)`,
           }}
         >
           {BLOCK_CHARS[cell.intensity]}
@@ -214,7 +229,7 @@ function AsciiDensityHeatmapInner({
   return (
     <div
       className="absolute inset-0"
-      style={{ pointerEvents: 'none', zIndex: 1 }}
+      style={{ pointerEvents: 'none', zIndex: 2 }}
     >
       {cellElements}
     </div>

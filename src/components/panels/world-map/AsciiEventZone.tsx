@@ -87,8 +87,6 @@ export function AsciiEventZone({
         top,
         width,
         height,
-        minWidth: '60px',
-        minHeight: '30px',
         zIndex: isCritical ? 10 : 5,
         pointerEvents: 'all',
       }}

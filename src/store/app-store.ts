@@ -75,6 +75,10 @@ interface AppState {
   // ─── AI Provider ───
   aiProvider: AiProvider;
   setAiProvider: (provider: AiProvider) => void;
+
+  // ─── Welcome Modal ───
+  welcomeDismissed: boolean;
+  dismissWelcome: () => void;
 }
 
 // Default values computed from registry
@@ -102,7 +106,7 @@ const DEFAULT_MAP_DISPLAY_OPTIONS: MapDisplayOptions = {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      colorScheme: 'green',
+      colorScheme: 'white',
       setColorScheme: (colorScheme) => set({ colorScheme }),
       crtEnabled: true,
       toggleCrt: () => set((s) => ({ crtEnabled: !s.crtEnabled })),
@@ -210,10 +214,14 @@ export const useAppStore = create<AppState>()(
       // ─── AI Provider ───
       aiProvider: 'google',
       setAiProvider: (aiProvider) => set({ aiProvider }),
+
+      // ─── Welcome Modal ───
+      welcomeDismissed: false,
+      dismissWelcome: () => set({ welcomeDismissed: true }),
     }),
     {
       name: 'globeops-settings',
-      version: 7,
+      version: 8,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (version === 0) {
@@ -254,6 +262,9 @@ export const useAppStore = create<AppState>()(
             if (sources.gdacs === undefined) sources.gdacs = true;
           }
         }
+        if (version < 8) {
+          state.welcomeDismissed = state.welcomeDismissed ?? false;
+        }
         return state as Partial<AppState>;
       },
       // Only persist UI preferences — filter state starts fully unlocked on every load
@@ -268,6 +279,7 @@ export const useAppStore = create<AppState>()(
         mapDataSources: state.mapDataSources,
         mapDisplayOptions: state.mapDisplayOptions,
         aiProvider: state.aiProvider,
+        welcomeDismissed: state.welcomeDismissed,
       }),
     }
   )

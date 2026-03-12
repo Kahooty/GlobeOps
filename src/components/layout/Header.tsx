@@ -135,7 +135,16 @@ export function Header() {
       {/* Left: Title */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-bold tracking-[0.2em] text-glow">GLOBEOPS</span>
-        <span className="text-terminal-primary-dim text-xs">v1.0.0</span>
+        <span className="text-terminal-primary-dim text-xs">v1.0.1</span>
+        <a
+          href="https://github.com/Kahooty/GlobeOps"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-terminal-primary-dim hover:text-terminal-primary px-1 transition-colors"
+          title="View source on GitHub"
+        >
+          [GH]
+        </a>
       </div>
 
       {/* Center: Clock */}
