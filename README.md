@@ -16,7 +16,7 @@ Built with React 19, TypeScript, Vite 7, Tailwind CSS 4, and Zustand. Zero backe
 ## Quick Start
 
 ```bash
-git clone https://github.com/tgoode34/GlobeOps.git
+git clone https://github.com/Kahooty/GlobeOps.git 
 cd GlobeOps
 npm install
 npm run dev
