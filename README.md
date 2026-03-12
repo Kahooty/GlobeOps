@@ -1,6 +1,6 @@
 ```
   ┌─────────────────────────────────────┐
-  │         GLOBEOPS v1.0.0             │
+  │         GLOBEOPS v1.0.1             │
   │   Real-Time Intelligence Dashboard  │
   └─────────────────────────────────────┘
 ```
@@ -16,8 +16,8 @@ Built with React 19, TypeScript, Vite 7, Tailwind CSS 4, and Zustand. Zero backe
 ## Quick Start
 
 ```bash
-git clone <your-repo-url>
-cd globeops
+git clone https://github.com/tgoode34/GlobeOps.git
+cd GlobeOps
 npm install
 npm run dev
 ```

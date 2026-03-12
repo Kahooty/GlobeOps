@@ -57,6 +57,27 @@ const MAX_OVERLAY_ELEMENTS: Record<number, number> = {
   5: 300,
 };
 
+// ─── Priority event extraction ───
+// Critical/high severity events of these types bypass clustering entirely,
+// rendering independently at their actual coordinates with correct radar pings.
+
+const PRIORITY_EXTRACT_TYPES: Set<MapEventType> = new Set([
+  'armed-conflict',
+  'military-activity',
+  'defense',
+  'conflict-zone',
+  'intel-hotspot',
+  'humanitarian-crisis',
+  'disaster-alert',
+]);
+
+function isPriorityEvent(event: MapEvent): boolean {
+  return (
+    PRIORITY_EXTRACT_TYPES.has(event.type) &&
+    (event.severity === 'critical' || event.severity === 'high')
+  );
+}
+
 // ─── Clustering ───
 
 const CLUSTER_CELL_SIZE: Record<number, number> = {
@@ -185,8 +206,23 @@ export function AsciiEventOverlay({
     return { visible: vis, edgeCounts: edges };
   }, [filtered, bounds, zoomLevel]);
 
-  // Cluster visible events
-  const clusters = useMemo(() => clusterEvents(visible, zoomLevel), [visible, zoomLevel]);
+  // Partition: extract priority events before clustering so they render
+  // independently at their actual coordinates (fixes radar ping misposition)
+  const { priorityEvents, clusters } = useMemo(() => {
+    const priority: MapEvent[] = [];
+    const rest: MapEvent[] = [];
+    for (const ev of visible) {
+      if (isPriorityEvent(ev)) {
+        priority.push(ev);
+      } else {
+        rest.push(ev);
+      }
+    }
+    return {
+      priorityEvents: priority,
+      clusters: clusterEvents(rest, zoomLevel),
+    };
+  }, [visible, zoomLevel]);
 
   // Performance cap
   const maxElements = MAX_OVERLAY_ELEMENTS[zoomLevel] ?? 100;
@@ -210,9 +246,72 @@ export function AsciiEventOverlay({
     onEventHover(null, { x: 0, y: 0 });
   }, [onEventHover]);
 
-  // ─── Render clusters via classifier ───
+  // ─── Render priority events at their actual coordinates ───
 
   let elementCount = 0;
+
+  const priorityElements = priorityEvents.flatMap((event) => {
+    if (elementCount >= maxElements) return [];
+
+    const pos = lonLatToViewportPercent(event.coordinates[0], event.coordinates[1], bounds);
+    if (!pos) return [];
+
+    elementCount++;
+    const treatment = classifySingleEvent(event, zoomLevel);
+    const hoverHandler = makeHoverHandler([event]);
+
+    switch (treatment.kind) {
+      case 'pulse-marker':
+        return (
+          <AsciiPulseMarker
+            key={event.id}
+            event={event}
+            left={pos.left}
+            top={pos.top}
+            zoomLevel={zoomLevel}
+            colorVar={treatment.colorVar}
+            intensity={treatment.intensity}
+            animated={treatment.animated}
+            onMouseEnter={hoverHandler}
+            onMouseLeave={handleMouseLeave}
+            onClick={() => onEventClick(event)}
+          />
+        );
+
+      case 'danger-box':
+      case 'danger-banner':
+      case 'danger-wire':
+        return (
+          <AsciiDangerFlag
+            key={event.id}
+            event={event}
+            left={pos.left}
+            top={pos.top}
+            zoomLevel={zoomLevel}
+            variant={treatment.dangerVariant ?? 'box'}
+            onMouseEnter={hoverHandler}
+            onMouseLeave={handleMouseLeave}
+            onClick={() => onEventClick(event)}
+          />
+        );
+
+      default:
+        return (
+          <AsciiEventFlag
+            key={event.id}
+            event={event}
+            left={pos.left}
+            top={pos.top}
+            zoomLevel={zoomLevel}
+            onMouseEnter={hoverHandler}
+            onMouseLeave={handleMouseLeave}
+            onClick={() => onEventClick(event)}
+          />
+        );
+    }
+  });
+
+  // ─── Render clusters via classifier ───
 
   const overlayElements = clusters.flatMap((cluster, idx) => {
     if (elementCount >= maxElements) return [];
@@ -472,7 +571,10 @@ export function AsciiEventOverlay({
       {/* Ambient layer (region labels, grid refs, strategic markers) */}
       <AsciiAmbientLayer bounds={bounds} zoomLevel={zoomLevel} />
 
-      {/* Event overlays */}
+      {/* Priority events (rendered at actual coordinates, above clusters) */}
+      {priorityElements}
+
+      {/* Clustered event overlays */}
       {overlayElements}
 
       {/* Off-screen edge indicators (only when zoomed in) */}
