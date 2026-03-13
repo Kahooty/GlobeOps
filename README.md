@@ -11,6 +11,8 @@ Real-time global intelligence operations dashboard. 24 modular panels aggregatin
 
 Built with React 19, TypeScript, Vite 7, Tailwind CSS 4, and Zustand. Zero backend dependencies — runs on a single Node.js process.
 
+Live Example - https://globeops.cloud/
+
 ---
 
 ## Quick Start
